@@ -1,70 +1,76 @@
-# CLAUDE.md
+# CLAUDE.md (KR/JP)
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+## 한국어 (Korean)
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+일반적인 LLM 코딩 실수를 줄이기 위한 행동 지침입니다. 필요에 따라 프로젝트별 지침과 병합하세요.
 
-## 1. Think Before Coding
+**트레이드오프:** 이 지침은 속도보다 주의를 기울이는 쪽에 비중을 둡니다. 사소한 작업의 경우 판단에 따르세요.
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+### 1. 코딩 전 생각하기
+- 가정을 명시적으로 밝히세요. 불확실하다면 물어보세요.
+- 여러 해석이 가능하다면 제시하세요. 혼자서 임의로 선택하지 마세요.
+- 더 간단한 접근 방식이 있다면 제안하세요. 정당한 이유가 있다면 반대 의견을 내세요.
+- 명확하지 않은 부분이 있다면 멈추세요. 무엇이 혼란스러운지 밝히고 질문하세요.
 
-Before implementing:
+### 2. 단순함 우선
+- 문제를 해결하는 최소한의 코드만 작성하세요. 추측에 기반한 코드는 금지입니다.
+- 요청받지 않은 기능은 추가하지 마세요.
+- 단발성 코드를 위한 추상화는 하지 마세요.
+- 발생 불가능한 시나리오에 대한 예외 처리를 하지 마세요.
+- 50줄로 작성할 수 있는 코드를 200줄로 작성했다면 다시 작성하세요.
 
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+### 3. 정밀한 변경
+- 필요한 부분만 수정하세요. 본인이 만든 문제만 정리하세요.
+- 인접한 코드, 주석 또는 포맷을 임의로 "개선"하려 하지 마세요.
+- 자신의 방식과 다르더라도 기존 스타일을 따르세요.
+- 관련 없는 데드 코드를 발견하면 언급하되, 직접 삭제하지는 마세요.
 
-## 2. Simplicity First
+### 4. 목표 중심 실행
+- 성공 기준을 정의하세요. 검증될 때까지 반복하세요.
+- "유효성 검사 추가" → "유효하지 않은 입력에 대한 테스트를 작성하고 통과시키기"
+- "버그 수정" → "버그를 재현하는 테스트를 작성하고 통과시키기"
+- 단계별 작업의 경우 간단한 계획을 명시하세요 (예: 1. 단계 → 검증).
 
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-
-## 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+### 5. 상업적 이용 안전성 (Commercial Safety)
+- **자유로운 라이선스:** MIT, Apache 2.0 등 상업적 이용이 허용된 라이선스의 코드만 사용하세요.
+- **Copyleft 금지:** GPL 등 소스코드 공개 의무가 생기는 코드를 프로젝트에 절대 포함하지 마세요.
+- **철저한 보안:** 모든 코드는 상업적 서비스 배포가 가능한 수준의 보안 관행을 준수해야 합니다.
 
 ---
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+## 日本語 (Japanese)
+
+一般的なLLMコーディングミスを減らすための行動指針です。必要に応じてプロジェクト固有の指示とマージしてください。
+
+**トレードオフ:** これらのガイドラインは、速度よりも慎重さを優先します。些細なタスクについては、各自の判断で行ってください。
+
+### 1. コーディング前に考える
+- 前提条件を明示してください。不確実な場合は質問してください。
+- 複数の解釈がある場合は提示してください。勝手に選択しないでください。
+- よりシンプルなアプローチがある場合は提案してください。妥当な理由があれば反対意見を述べてください。
+- 不明な点があれば立ち止まってください。何が混乱を招いているかを特定し、質問してください。
+
+### 2. シンプルさ優先
+- 問題を解決する最小限のコードのみを記述してください。推測に基づくコードは禁止です。
+- 求められていない機能は追加しないでください。
+- 一回限りのコードのために抽象化を行わないでください。
+- 起こり得ないシナリオに対するエラーハンドリングを行わないでください。
+- 50行で書けるコードを200行で書いた場合は、書き直してください。
+
+### 3. 的を絞った変更
+- 必要な箇所のみを修正してください。自分が散らかしたものだけを片付けてください。
+- 隣接するコード、コメント、フォーマットを勝手に「改善」しないでください。
+- 自分のやり方と違っても、既存のスタイルに合わせてください。
+- 無関係なデッドコードを見つけた場合は言及に留め、削除しないでください。
+
+### 4. 目標主導の実行
+- 成功基準を定義してください。検証されるまでループしてください。
+- 「バリデーション追加」→「無効な入力に対するテストを書き、それをパスさせる」
+- 「バグ修正」→「バグを再現するテストを書き、それをパスさせる」
+- ステップが複数あるタスクの場合は、簡単な計画を提示してください（例：1. ステップ → 検証）。
+
+### 5. 商用利用の安全性 (Commercial Safety)
+- **自由なライセンス:** MIT, Apache 2.0 などの商用利用が許可されたライセンスのコードのみを使用してください。
+- **コピーレフト禁止:** GPL など、ソースコード公開義務が生じるコードをプロジェクトに絶対に含めないでください。
+- **徹底したセキュリティ:** すべてのコードは商用サービスとしてデプロイ可能なレベルのセキュリティ慣行を遵守する必要があります。
+
