@@ -39,3 +39,7 @@ backend/backend
 .idea/
 *.swp
 *.swo
+
+# Go / Air tmp files and logs
+backend/tmp/
+*.log
