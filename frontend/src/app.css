@@ -1,1 +1,44 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Global dark mode overrides — covers all components without per-file changes */
+
+/* Stone scale */
+.dark .bg-white { background-color: #262626; }
+.dark .bg-stone-50 { background-color: #1f1f1f; }
+.dark .bg-stone-100 { background-color: #2a2a2a; }
+.dark .bg-stone-200 { background-color: #333333; }
+.dark .text-stone-900 { color: #f5f5f4; }
+.dark .text-stone-800 { color: #e7e5e4; }
+.dark .text-stone-700 { color: #d6d3d1; }
+.dark .text-stone-600 { color: #c7c3be; }
+.dark .border-stone-50  { border-color: #2a2a2a; }
+.dark .border-stone-100 { border-color: #3a3a3a; }
+.dark .border-stone-200 { border-color: #404040; }
+
+/* Divide utilities */
+.dark .divide-stone-100 > :not([hidden]) ~ :not([hidden]) { border-color: #3a3a3a; }
+
+/* Arbitrary brand colors */
+.dark .bg-\[\#F5F2EC\] { background-color: #2e2c2a; }
+.dark .bg-\[\#EEF3EE\] { background-color: #252e26; }
+.dark .bg-\[\#EBF0EB\] { background-color: #252e26; }
+.dark .bg-\[\#EDE9E2\] { background-color: #111111; }
+
+/* Brand text colors on dark backgrounds */
+.dark .text-\[\#6A8C6C\] { color: #9ab89c; }
+.dark .text-\[\#5A7A5C\] { color: #8aad8c; }
+
+/* Stone with opacity modifier */
+.dark .bg-stone-50\/80 { background-color: rgb(28 28 28 / 0.8); }
+
+/* Inputs */
+.dark input, .dark textarea, .dark select {
+  background-color: #1f1f1f;
+  color: #e7e5e4;
+  border-color: #404040;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: #57534e; }
+
+/* Transparent / ghost inputs */
+.dark .bg-transparent { background-color: transparent; }

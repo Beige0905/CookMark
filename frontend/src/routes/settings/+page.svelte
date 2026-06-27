@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { auth } from '$lib/stores/auth.svelte';
+	import { theme } from '$lib/stores/theme.svelte';
 
 	const displayName = $derived(auth.user?.display_name ?? '...');
 	const email = $derived(auth.user?.email ?? '');
@@ -40,17 +41,18 @@
 	<div class="space-y-4">
 		<h2 class="px-4 text-xs font-bold uppercase tracking-widest text-stone-400">앱 설정</h2>
 		<div class="overflow-hidden rounded-[2rem] border border-stone-100 bg-white">
-			<div class="flex items-center justify-between border-b border-stone-50 p-6">
-				<span class="font-bold text-stone-700">다크 모드</span>
-				<div class="relative h-6 w-11 cursor-pointer rounded-full bg-stone-200 p-1">
-					<div class="h-4 w-4 rounded-full bg-white shadow-sm"></div>
+			<button
+				onclick={() => theme.toggle()}
+				class="flex w-full items-center justify-between border-b border-stone-50 p-6 text-left"
+			>
+				<span class="font-bold text-stone-700 dark:text-stone-300">다크 모드</span>
+				<div class="relative h-6 w-11 cursor-pointer rounded-full p-1 transition-colors {theme.dark ? 'bg-[#7C9A7E]' : 'bg-stone-200'}">
+					<div class="h-4 w-4 rounded-full bg-white shadow-sm transition-transform {theme.dark ? 'translate-x-5' : 'translate-x-0'}"></div>
 				</div>
-			</div>
+			</button>
 			<div class="flex items-center justify-between border-b border-stone-50 p-6">
-				<span class="font-bold text-stone-700">푸시 알림</span>
-				<div class="relative h-6 w-11 cursor-pointer rounded-full bg-[#7C9A7E] p-1">
-					<div class="ml-auto h-4 w-4 rounded-full bg-white shadow-sm"></div>
-				</div>
+				<span class="font-bold text-stone-400">푸시 알림</span>
+				<span class="text-xs text-stone-400 bg-stone-100 rounded-full px-3 py-1">준비 중</span>
 			</div>
 			<div class="p-6">
 				<p class="text-xs text-stone-400">버전 1.0.0 (beta)</p>
