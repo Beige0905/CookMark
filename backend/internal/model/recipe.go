@@ -9,6 +9,7 @@ type Recipe struct {
 	ID           int             `json:"id"`
 	Title        string          `json:"title"`
 	OriginURL    *string         `json:"origin_url,omitempty"`
+	ImageURL     *string         `json:"image_url,omitempty"`
 	BaseServings int             `json:"base_servings"`
 	Ingredients  json.RawMessage `json:"ingredients"` // JSONB
 	Instructions []string        `json:"instructions"`
@@ -27,4 +28,11 @@ type PantryItem struct {
 	Name      string    `json:"name"`
 	Category  *string   `json:"category,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type RecipeNote struct {
+	RecipeID    int             `json:"recipe_id"`
+	Memo        string          `json:"memo"`
+	Adjustments json.RawMessage `json:"adjustments"`
+	UpdatedAt   time.Time       `json:"updated_at"`
 }

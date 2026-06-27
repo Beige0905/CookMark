@@ -9,6 +9,7 @@ import (
 type RecipeRepository interface {
 	FindAll(ctx context.Context) ([]model.Recipe, error)
 	FindByID(ctx context.Context, id int) (*model.Recipe, error)
+	FindByOriginURL(ctx context.Context, url string) (*model.Recipe, error)
 	Create(ctx context.Context, r *model.Recipe) error
 }
 
@@ -21,4 +22,9 @@ type PantryRepository interface {
 	FindAll(ctx context.Context) ([]model.PantryItem, error)
 	Create(ctx context.Context, item *model.PantryItem) error
 	Delete(ctx context.Context, id int) error
+}
+
+type NoteRepository interface {
+	FindByRecipeID(ctx context.Context, recipeID int) (*model.RecipeNote, error)
+	Upsert(ctx context.Context, note *model.RecipeNote) error
 }

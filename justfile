@@ -14,6 +14,10 @@ db:
 dev: db
     cd backend && air
 
+# 개발용 Docker (프론트 HMR 포함, http://localhost:5173)
+up-dev:
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+
 # 컨테이너 끄기
 down:
     docker-compose down
@@ -21,6 +25,10 @@ down:
 # DB 로그만 확인
 logs-db:
     docker-compose logs -f db
+
+# DB 마이그레이션 실행 (예: just db-migrate 003_add_recipe_notes.sql)
+db-migrate file:
+    docker-compose exec -T db psql -U ${POSTGRES_USER:-recipe_user} -d ${POSTGRES_DB:-recipe_db} < db/migrations/{{file}}
 
 # Go 백엔드 테스트 실행
 test:
