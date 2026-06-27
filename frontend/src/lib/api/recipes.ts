@@ -58,6 +58,21 @@ export async function createRecipe(data: Omit<Recipe, 'id' | 'created_at'>): Pro
 	return res.json();
 }
 
+export async function updateRecipe(id: number, data: Omit<Recipe, 'id' | 'created_at'>): Promise<Recipe> {
+	const res = await fetch(`${BASE}/recipes/${id}`, {
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(data)
+	});
+	if (!res.ok) throw new Error('레시피 수정 실패');
+	return res.json();
+}
+
+export async function deleteRecipe(id: number): Promise<void> {
+	const res = await fetch(`${BASE}/recipes/${id}`, { method: 'DELETE' });
+	if (!res.ok) throw new Error('레시피 삭제 실패');
+}
+
 export async function extractFromYouTube(url: string): Promise<YouTubeExtractResult> {
 	const res = await fetch(`${BASE}/youtube/extract`, {
 		method: 'POST',

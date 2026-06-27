@@ -78,3 +78,33 @@ func (r *PgRecipeRepository) Create(ctx context.Context, recipe *model.Recipe) e
 	}
 	return nil
 }
+
+func (r *PgRecipeRepository) Update(ctx context.Context, recipe *model.Recipe) error {
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE recipes
+		 SET title=$1, origin_url=$2, image_url=$3, base_servings=$4, ingredients=$5, instructions=$6, updated_at=NOW()
+		 WHERE id=$7 AND user_id=$8 AND deleted_at IS NULL`,
+		recipe.Title, recipe.OriginURL, recipe.ImageURL, recipe.BaseServings, recipe.Ingredients, recipe.Instructions, recipe.ID, recipe.UserID,
+	)
+	if err != nil {
+		return fmt.Errorf("레시피 수정 실패: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("레시피를 찾을 수 없습니다")
+	}
+	return nil
+}
+
+func (r *PgRecipeRepository) Delete(ctx context.Context, id int, userID string) error {
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE recipes SET deleted_at=NOW() WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL`,
+		id, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("레시피 삭제 실패: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("레시피를 찾을 수 없습니다")
+	}
+	return nil
+}

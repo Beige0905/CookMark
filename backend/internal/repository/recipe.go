@@ -11,6 +11,8 @@ type RecipeRepository interface {
 	FindByID(ctx context.Context, id int, userID string) (*model.Recipe, error)
 	FindByOriginURL(ctx context.Context, url string, userID string) (*model.Recipe, error)
 	Create(ctx context.Context, r *model.Recipe) error
+	Update(ctx context.Context, r *model.Recipe) error
+	Delete(ctx context.Context, id int, userID string) error
 }
 
 type CookingLogRepository interface {

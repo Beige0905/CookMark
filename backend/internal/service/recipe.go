@@ -30,3 +30,11 @@ func (s *RecipeService) FindByOriginURL(ctx context.Context, url string, userID 
 func (s *RecipeService) Create(ctx context.Context, r *model.Recipe) error {
 	return s.repo.Create(ctx, r)
 }
+
+func (s *RecipeService) Update(ctx context.Context, r *model.Recipe) error {
+	return s.repo.Update(ctx, r)
+}
+
+func (s *RecipeService) Delete(ctx context.Context, id int, userID string) error {
+	return s.repo.Delete(ctx, id, userID)
+}

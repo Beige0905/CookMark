@@ -71,6 +71,49 @@ func (h *RecipeHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, recipe)
 }
 
+func (h *RecipeHandler) Update(w http.ResponseWriter, r *http.Request) {
+	userID, ok := authpkg.UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, "인증이 필요합니다", http.StatusUnauthorized)
+		return
+	}
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "잘못된 ID", http.StatusBadRequest)
+		return
+	}
+	var recipe model.Recipe
+	if err := json.NewDecoder(r.Body).Decode(&recipe); err != nil {
+		http.Error(w, "잘못된 요청 본문", http.StatusBadRequest)
+		return
+	}
+	recipe.ID = id
+	recipe.UserID = userID
+	if err := h.svc.Update(r.Context(), &recipe); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, recipe)
+}
+
+func (h *RecipeHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	userID, ok := authpkg.UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, "인증이 필요합니다", http.StatusUnauthorized)
+		return
+	}
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "잘못된 ID", http.StatusBadRequest)
+		return
+	}
+	if err := h.svc.Delete(r.Context(), id, userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(v)

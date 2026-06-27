@@ -55,6 +55,8 @@ func main() {
 	mux.HandleFunc("GET /api/recipes", auth(recipeHandler.List))
 	mux.HandleFunc("GET /api/recipes/{id}", auth(recipeHandler.Get))
 	mux.HandleFunc("POST /api/recipes", auth(recipeHandler.Create))
+	mux.HandleFunc("PUT /api/recipes/{id}", auth(recipeHandler.Update))
+	mux.HandleFunc("DELETE /api/recipes/{id}", auth(recipeHandler.Delete))
 	mux.HandleFunc("GET /api/recipes/{id}/note", auth(noteHandler.Get))
 	mux.HandleFunc("PUT /api/recipes/{id}/note", auth(noteHandler.Put))
 	mux.HandleFunc("POST /api/youtube/extract", auth(youtubeHandler.Extract))

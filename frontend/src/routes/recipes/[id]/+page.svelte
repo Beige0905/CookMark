@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { getRecipe, getRecipeNote, upsertRecipeNote, type Recipe, type Ingredient } from '$lib/api/recipes';
+	import { goto } from '$app/navigation';
+	import { getRecipe, getRecipeNote, upsertRecipeNote, deleteRecipe, type Recipe, type Ingredient } from '$lib/api/recipes';
+	import { toast } from '$lib/toast.svelte';
 	import ChevronLeft from 'lucide-svelte/icons/chevron-left';
 	import Users from 'lucide-svelte/icons/users';
+	import Pencil from 'lucide-svelte/icons/pencil';
+	import Trash2 from 'lucide-svelte/icons/trash-2';
 
 	let recipe: Recipe | null = $state(null);
 	let servingSize = $state(1);
@@ -15,6 +19,22 @@
 	let pendingMemo = $state('');
 	let pendingAdjustments = $state<Record<string, number>>({});
 	let saving = $state(false);
+	let deleting = $state(false);
+
+	const recipeId = $derived(Number($page.params.id));
+
+	async function handleDelete() {
+		if (!confirm('이 레시피를 삭제할까요?')) return;
+		deleting = true;
+		try {
+			await deleteRecipe(recipeId);
+			toast.add('레시피가 삭제됐습니다.', 'success');
+			goto('/recipes');
+		} catch (e: any) {
+			toast.add(e.message || '삭제 중 오류가 발생했습니다.', 'error');
+			deleting = false;
+		}
+	}
 
 	let hasAdjustments = $derived(Object.keys(savedAdjustments).some(k => savedAdjustments[k] !== 0));
 
@@ -112,7 +132,7 @@
 	}
 
 	$effect(() => {
-		const id = Number($page.params.id);
+		const id = recipeId;
 		getRecipe(id)
 			.then((data) => (recipe = data))
 			.catch((e) => (error = e.message));
@@ -138,9 +158,28 @@
 		</div>
 	{:else if recipe}
 		<div class="space-y-4">
-			<div class="space-y-2">
-				<h1 class="text-4xl font-bold text-stone-900">{recipe.title}</h1>
-				<p class="text-stone-500">{recipe.description}</p>
+			<div class="flex items-start justify-between gap-4">
+				<div class="space-y-2">
+					<h1 class="text-4xl font-bold text-stone-900">{recipe.title}</h1>
+					<p class="text-stone-500">{recipe.description}</p>
+				</div>
+				<div class="flex items-center gap-2 shrink-0">
+					<a
+						href="/recipes/{recipeId}/edit"
+						class="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-stone-200 text-sm font-semibold text-stone-500 hover:border-[#7C9A7E] hover:text-[#7C9A7E] transition-colors"
+					>
+						<Pencil class="h-4 w-4" />
+						수정
+					</a>
+					<button
+						onclick={handleDelete}
+						disabled={deleting}
+						class="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-stone-200 text-sm font-semibold text-stone-500 hover:border-red-300 hover:text-red-500 transition-colors disabled:opacity-40"
+					>
+						<Trash2 class="h-4 w-4" />
+						삭제
+					</button>
+				</div>
 			</div>
 
 			<div class="flex items-center gap-4 text-sm text-stone-400">
