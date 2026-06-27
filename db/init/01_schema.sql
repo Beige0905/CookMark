@@ -1,28 +1,39 @@
--- 1. 레시피 정보를 담는 테이블
+-- 1. 레시피 테이블 (JSONB 사용)
 CREATE TABLE IF NOT EXISTS recipes (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     origin_url TEXT,
+    image_url TEXT,
     base_servings INTEGER DEFAULT 1,
-    ingredients JSONB NOT NULL,         -- JSONB로 재료들 보관
-    instructions TEXT[],                -- 조리 순서
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- 2. "만들었어!" 버튼을 누를 때마다 기록되는 로그 테이블
-CREATE TABLE IF NOT EXISTS cooking_logs (
-    id SERIAL PRIMARY KEY,
-    recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
-    comment TEXT,                       -- 코멘트 (선택 사항)
-    cooked_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP -- 만든 날짜/시간
+    ingredients JSONB NOT NULL,
+    instructions TEXT[],
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX idx_recipes_ingredients ON recipes USING GIN (ingredients);
+CREATE INDEX idx_recipes_origin_url ON recipes (origin_url);
+CREATE INDEX idx_recipes_deleted_at ON recipes (deleted_at) WHERE deleted_at IS NULL;
 
--- 보유 식재료 (단순 버전)
+-- 2. "만들었어!" 로그 테이블
+CREATE TABLE IF NOT EXISTS cooking_logs (
+    id SERIAL PRIMARY KEY,
+    recipe_id INTEGER REFERENCES recipes(id) ON DELETE CASCADE, 
+    comment TEXT,
+    cooked_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. 보유 식재료 테이블
 CREATE TABLE IF NOT EXISTS my_pantry (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,       -- 재료명 (예: 양파)
-    category TEXT,                   -- 채소, 고기, 양념 등
+    name TEXT NOT NULL UNIQUE,
+    category TEXT,
+    amount_num NUMERIC(10, 2),
+    unit TEXT,
+    expiry_date DATE,
+    input_method TEXT DEFAULT 'manual',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX idx_my_pantry_name ON my_pantry (name);
