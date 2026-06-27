@@ -43,3 +43,11 @@ backend/backend
 # Go / Air tmp files and logs
 backend/tmp/
 *.log
+
+# Claude Code internal files
+.claude/
+.agents/
+skills-lock.json
+
+# Local test scripts with hardcoded keys
+backend/test_gemini.go
