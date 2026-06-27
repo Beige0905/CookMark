@@ -16,8 +16,9 @@ type RecipeRepository interface {
 }
 
 type CookingLogRepository interface {
-	FindByRecipeID(ctx context.Context, recipeID int) ([]model.CookingLog, error)
+	FindByRecipeID(ctx context.Context, recipeID int, userID string) ([]model.CookingLog, error)
 	Create(ctx context.Context, log *model.CookingLog) error
+	Delete(ctx context.Context, id int, userID string) error
 }
 
 type PantryRepository interface {
@@ -26,7 +27,3 @@ type PantryRepository interface {
 	Delete(ctx context.Context, id int, userID string) error
 }
 
-type NoteRepository interface {
-	FindByRecipeID(ctx context.Context, recipeID int, userID string) (*model.RecipeNote, error)
-	Upsert(ctx context.Context, note *model.RecipeNote) error
-}

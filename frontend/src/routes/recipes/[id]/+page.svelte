@@ -1,77 +1,26 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { getRecipe, getRecipeNote, upsertRecipeNote, deleteRecipe, type Recipe, type Ingredient } from '$lib/api/recipes';
+	import { getRecipe, deleteRecipe, type Recipe, type Ingredient } from '$lib/api/recipes';
+	import { getCookingLogs, addCookingLog, deleteCookingLog, type CookingLog } from '$lib/api/cooking-logs';
 	import { toast } from '$lib/toast.svelte';
 	import ChevronLeft from 'lucide-svelte/icons/chevron-left';
 	import Users from 'lucide-svelte/icons/users';
 	import Pencil from 'lucide-svelte/icons/pencil';
 	import Trash2 from 'lucide-svelte/icons/trash-2';
 
-	let recipe: Recipe | null = $state(null);
+	let recipe = $state<Recipe | null>(null);
 	let servingSize = $state(1);
 	let error = $state('');
 	let activeTab = $state<'ingredients' | 'steps'>('ingredients');
-
-	let editMode = $state(false);
-	let savedMemo = $state('');
-	let savedAdjustments = $state<Record<string, number>>({});
-	let pendingMemo = $state('');
-	let pendingAdjustments = $state<Record<string, number>>({});
-	let saving = $state(false);
 	let deleting = $state(false);
 
+	let logs = $state<CookingLog[]>([]);
+	let logComment = $state('');
+	let logDate = $state('');
+	let addingLog = $state(false);
+
 	const recipeId = $derived(Number($page.params.id));
-
-	async function handleDelete() {
-		if (!confirm('이 레시피를 삭제할까요?')) return;
-		deleting = true;
-		try {
-			await deleteRecipe(recipeId);
-			toast.add('레시피가 삭제됐습니다.', 'success');
-			goto('/recipes');
-		} catch (e: any) {
-			toast.add(e.message || '삭제 중 오류가 발생했습니다.', 'error');
-			deleting = false;
-		}
-	}
-
-	let hasAdjustments = $derived(Object.keys(savedAdjustments).some(k => savedAdjustments[k] !== 0));
-
-	function enterEditMode() {
-		pendingMemo = savedMemo;
-		pendingAdjustments = { ...savedAdjustments };
-		editMode = true;
-	}
-
-	function cancelEdit() {
-		editMode = false;
-	}
-
-	async function saveNote() {
-		if (!recipe) return;
-		saving = true;
-		try {
-			await upsertRecipeNote(recipe.id, { memo: pendingMemo, adjustments: pendingAdjustments });
-			savedMemo = pendingMemo;
-			savedAdjustments = { ...pendingAdjustments };
-			editMode = false;
-		} finally {
-			saving = false;
-		}
-	}
-
-	function resetAdjustments() {
-		savedAdjustments = {};
-		savedMemo = '';
-		upsertRecipeNote(recipe!.id, { memo: '', adjustments: {} });
-	}
-
-	function adjustIngredient(name: string, delta: number) {
-		const current = pendingAdjustments[name] ?? 0;
-		const next = Math.max(-80, Math.min(100, current + delta));
-		pendingAdjustments = { ...pendingAdjustments, [name]: next };
-	}
 
 	const SPOON_UNITS = new Set(['스푼', '큰술', '작은술', 'T', 't', 'tbsp', 'tsp', '컵', 'cup']);
 	const WEIGHT_VOLUME_UNITS = new Set(['g', 'ml', 'L', 'l', 'kg']);
@@ -102,23 +51,16 @@
 		return `${wholeStr}${fracStr || (whole === 0 ? '0' : '')}${unit}`;
 	}
 
-	// 인분 수에 따른 재료 계산
 	let activeIngredients = $derived.by(() => {
 		if (!recipe) return [];
-		return recipe.ingredients.map(ing => scaleIngredient(ing, servingSize));
+		return recipe.ingredients.map((ing) => scaleIngredient(ing, servingSize));
 	});
 
 	function scaleIngredient(ing: Ingredient, size: number): Ingredient {
 		if (ing.amount_num) {
 			const factor = ing.scaling_factor ?? 1.0;
 			const scaled = ing.amount_num * (1 + (size - 1) * factor);
-			const adj = savedAdjustments[ing.name] ?? 0;
-			const adjusted = scaled * (1 + adj / 100);
-			return {
-				...ing,
-				amount_num: roundByUnit(adjusted, ing.unit || ''),
-				amount: undefined
-			};
+			return { ...ing, amount_num: roundByUnit(scaled, ing.unit || ''), amount: undefined };
 		}
 		return ing;
 	}
@@ -131,16 +73,57 @@
 		return ing.note || '';
 	}
 
+	async function handleDelete() {
+		if (!confirm('이 레시피를 삭제할까요?')) return;
+		deleting = true;
+		try {
+			await deleteRecipe(recipeId);
+			toast.add('레시피가 삭제됐습니다.', 'success');
+			goto('/recipes');
+		} catch (e: any) {
+			toast.add(e.message || '삭제 중 오류가 발생했습니다.', 'error');
+			deleting = false;
+		}
+	}
+
+	async function handleAddLog(event: SubmitEvent) {
+		event.preventDefault();
+		addingLog = true;
+		try {
+			const log = await addCookingLog(recipeId, {
+				comment: logComment || undefined,
+				cooked_at: logDate || undefined
+			});
+			logs = [log, ...logs];
+			logComment = '';
+			logDate = '';
+			toast.add('요리 기록이 추가됐습니다!', 'success');
+		} catch (e: any) {
+			toast.add(e.message || '기록 추가 실패', 'error');
+		} finally {
+			addingLog = false;
+		}
+	}
+
+	async function handleDeleteLog(logId: number) {
+		try {
+			await deleteCookingLog(recipeId, logId);
+			logs = logs.filter((l) => l.id !== logId);
+		} catch (e: any) {
+			toast.add(e.message || '기록 삭제 실패', 'error');
+		}
+	}
+
 	$effect(() => {
 		const id = recipeId;
 		getRecipe(id)
-			.then((data) => (recipe = data))
-			.catch((e) => (error = e.message));
-		getRecipeNote(id)
-			.then((note) => {
-				savedMemo = note.memo;
-				savedAdjustments = note.adjustments;
+			.then((data) => {
+				recipe = data;
+				servingSize = data.base_servings;
 			})
+			.catch((e) => (error = e.message));
+		getCookingLogs(id)
+			.then((data) => (logs = data))
 			.catch(() => {});
 	});
 </script>
@@ -187,21 +170,17 @@
 				<span>👤 작성자: 나</span>
 			</div>
 
-			<!-- Sticky 탭 (모바일 전용) -->
+			<!-- 탭 (모바일) -->
 			<div class="sticky top-0 z-10 -mx-5 bg-white px-5 border-b border-stone-100 md:hidden">
 				<div class="flex">
 					<button
 						onclick={() => activeTab = 'ingredients'}
 						class="flex-1 py-3 text-sm font-semibold transition-colors border-b-2 {activeTab === 'ingredients' ? 'border-[#7C9A7E] text-[#7C9A7E]' : 'border-transparent text-stone-400'}"
-					>
-						재료
-					</button>
+					>재료</button>
 					<button
 						onclick={() => activeTab = 'steps'}
 						class="flex-1 py-3 text-sm font-semibold transition-colors border-b-2 {activeTab === 'steps' ? 'border-[#7C9A7E] text-[#7C9A7E]' : 'border-transparent text-stone-400'}"
-					>
-						요리방법
-					</button>
+					>요리방법</button>
 				</div>
 			</div>
 
@@ -210,8 +189,6 @@
 				<div class="rounded-3xl bg-white p-8 border border-stone-100 shadow-sm {activeTab !== 'ingredients' ? 'hidden md:block' : ''}">
 					<div class="mb-6 flex items-center justify-between">
 						<h2 class="text-xl font-bold text-stone-800">재료</h2>
-
-						<!-- 인분 수 선택기 -->
 						<div class="flex items-center gap-1 bg-stone-50 px-2 py-1 rounded-xl border border-stone-100">
 							<Users class="w-3.5 h-3.5 text-stone-400" />
 							<button
@@ -227,82 +204,16 @@
 							>+</button>
 						</div>
 					</div>
-
-					<!-- 내 취향 조정 배너 -->
-					{#if hasAdjustments && !editMode}
-						<div class="mb-4 flex items-center justify-between rounded-xl bg-[#7C9A7E]/10 px-3 py-2 text-xs text-[#7C9A7E]">
-							<span class="font-semibold">내 취향으로 조정됨</span>
-							<button onclick={resetAdjustments} class="font-medium underline underline-offset-2 hover:opacity-70">
-								원래 값으로 되돌리기
-							</button>
-						</div>
-					{/if}
-
 					<ul class="space-y-3">
 						{#each activeIngredients as ingredient}
 							<li class="pb-2 border-b border-stone-50 last:border-0">
-								{#if editMode}
-									<div class="flex items-center justify-between">
-										<span class="font-medium text-stone-600">{ingredient.name}</span>
-										<div class="flex items-center gap-2">
-											<span class="text-xs text-stone-400 w-14 text-right">{getDisplayAmount(ingredient)}</span>
-											<div class="flex items-center gap-0.5 bg-stone-50 rounded-lg border border-stone-100 px-1 py-0.5">
-												<button
-													onclick={() => adjustIngredient(ingredient.name, -10)}
-													disabled={(pendingAdjustments[ingredient.name] ?? 0) <= -80}
-													class="w-5 h-5 flex items-center justify-center text-stone-400 hover:text-stone-600 disabled:opacity-30 font-bold text-sm"
-												>−</button>
-												<span class="text-xs font-bold w-10 text-center {(pendingAdjustments[ingredient.name] ?? 0) !== 0 ? 'text-[#7C9A7E]' : 'text-stone-400'}">
-													{(pendingAdjustments[ingredient.name] ?? 0) > 0 ? '+' : ''}{pendingAdjustments[ingredient.name] ?? 0}%
-												</span>
-												<button
-													onclick={() => adjustIngredient(ingredient.name, 10)}
-													disabled={(pendingAdjustments[ingredient.name] ?? 0) >= 100}
-													class="w-5 h-5 flex items-center justify-center text-stone-400 hover:text-stone-600 disabled:opacity-30 font-bold text-sm"
-												>+</button>
-											</div>
-										</div>
-									</div>
-								{:else}
-									<div class="flex justify-between items-center text-stone-600">
-										<span class="font-medium">{ingredient.name}</span>
-										<span class="text-sm text-stone-400">{getDisplayAmount(ingredient)}</span>
-									</div>
-								{/if}
+								<div class="flex justify-between items-center text-stone-600">
+									<span class="font-medium">{ingredient.name}</span>
+									<span class="text-sm text-stone-400">{getDisplayAmount(ingredient)}</span>
+								</div>
 							</li>
 						{/each}
 					</ul>
-
-					<!-- 편집 모드 -->
-					{#if editMode}
-						<div class="mt-6 space-y-3">
-							<textarea
-								bind:value={pendingMemo}
-								placeholder="메모 (예: 좀 짰음, 다음엔 소금 덜)"
-								rows="3"
-								class="w-full rounded-xl border border-stone-100 bg-stone-50 px-3 py-2 text-sm text-stone-600 placeholder-stone-300 outline-none focus:border-[#7C9A7E] resize-none"
-							></textarea>
-							<div class="flex gap-2">
-								<button
-									onclick={cancelEdit}
-									class="flex-1 rounded-xl border border-stone-100 py-2 text-sm font-semibold text-stone-400 hover:bg-stone-50 transition-colors"
-								>취소</button>
-								<button
-									onclick={saveNote}
-									disabled={saving}
-									class="flex-1 rounded-xl bg-[#7C9A7E] py-2 text-sm font-semibold text-white hover:bg-[#6a8a6c] disabled:opacity-50 transition-colors"
-								>{saving ? '저장 중...' : '저장'}</button>
-							</div>
-						</div>
-					{:else}
-						<button
-							onclick={enterEditMode}
-							class="mt-5 w-full rounded-xl border border-stone-100 py-2 text-xs font-semibold text-stone-400 hover:border-[#7C9A7E] hover:text-[#7C9A7E] transition-colors"
-						>내 취향으로 조정</button>
-						{#if savedMemo}
-							<p class="mt-3 text-xs text-stone-400 italic">{savedMemo}</p>
-						{/if}
-					{/if}
 				</div>
 
 				<!-- 요리방법 패널 -->
@@ -323,6 +234,58 @@
 						{/if}
 					</div>
 				</div>
+			</div>
+
+			<!-- 요리 기록 -->
+			<div class="rounded-3xl bg-white border border-stone-100 shadow-sm p-8 space-y-6">
+				<h2 class="text-xl font-bold text-stone-800">요리 기록</h2>
+
+				<form onsubmit={handleAddLog} class="space-y-3">
+					<div class="flex gap-3">
+						<input
+							type="date"
+							bind:value={logDate}
+							class="rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:border-[#7C9A7E] transition-colors"
+						/>
+						<button
+							type="submit"
+							disabled={addingLog}
+							class="rounded-xl bg-[#7C9A7E] px-4 py-2 text-sm font-bold text-white disabled:opacity-40 hover:bg-[#6A8C6C] transition-colors"
+						>
+							{addingLog ? '추가 중...' : '오늘 만들었어! 🍳'}
+						</button>
+					</div>
+					<textarea
+						bind:value={logComment}
+						placeholder="오늘 어땠나요? (선택)"
+						rows="2"
+						class="w-full rounded-xl border border-stone-200 px-4 py-3 text-sm outline-none focus:border-[#7C9A7E] transition-colors resize-none placeholder-stone-300"
+					></textarea>
+				</form>
+
+				{#if logs.length === 0}
+					<p class="text-center text-sm text-stone-400 py-4">아직 요리 기록이 없습니다.</p>
+				{:else}
+					<ul class="space-y-3">
+						{#each logs as log (log.id)}
+							<li class="flex items-start justify-between gap-4 border-b border-stone-50 pb-3 last:border-0 last:pb-0">
+								<div class="space-y-1">
+									<p class="text-xs font-semibold text-stone-400">
+										{new Date(log.cooked_at).toLocaleDateString('ko-KR')}
+									</p>
+									{#if log.comment}
+										<p class="text-sm text-stone-600">{log.comment}</p>
+									{/if}
+								</div>
+								<button
+									onclick={() => handleDeleteLog(log.id)}
+									class="text-stone-300 hover:text-red-400 transition-colors text-lg leading-none shrink-0"
+									aria-label="기록 삭제"
+								>×</button>
+							</li>
+						{/each}
+					</ul>
+				{/if}
 			</div>
 		</div>
 	{:else}

@@ -19,6 +19,7 @@ type Recipe struct {
 
 type CookingLog struct {
 	ID       int       `json:"id"`
+	UserID   string    `json:"-"`
 	RecipeID int       `json:"recipe_id"`
 	Comment  *string   `json:"comment,omitempty"`
 	CookedAt time.Time `json:"cooked_at"`
@@ -31,10 +32,3 @@ type PantryItem struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-type RecipeNote struct {
-	RecipeID    int             `json:"recipe_id"`
-	UserID      string          `json:"-"`
-	Memo        string          `json:"memo"`
-	Adjustments json.RawMessage `json:"adjustments"`
-	UpdatedAt   time.Time       `json:"updated_at"`
-}

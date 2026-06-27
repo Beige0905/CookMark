@@ -23,20 +23,20 @@ func main() {
 	defer pool.Close()
 
 	recipeRepo := repository.NewPgRecipeRepository(pool)
-	noteRepo := repository.NewPgNoteRepository(pool)
 	userRepo := repository.NewPgUserRepository(pool)
 	pantryRepo := repository.NewPgPantryRepository(pool)
+	logRepo := repository.NewPgCookingLogRepository(pool)
 
 	aiService := service.NewAIService()
 	authService := service.NewAuthService(userRepo)
 	recipeService := service.NewRecipeService(recipeRepo)
-	noteService := service.NewNoteService(noteRepo)
 	pantryService := service.NewPantryService(pantryRepo, recipeRepo)
+	logService := service.NewCookingLogService(logRepo)
 
 	recipeHandler := handler.NewRecipeHandler(recipeService)
-	noteHandler := handler.NewNoteHandler(noteService)
 	authHandler := handler.NewAuthHandler(authService)
 	pantryHandler := handler.NewPantryHandler(pantryService)
+	logHandler := handler.NewCookingLogHandler(logService)
 	youtubeHandler := handler.NewYouTubeHandler(
 		service.NewYouTubeService(aiService),
 		recipeService,
@@ -60,8 +60,9 @@ func main() {
 	mux.HandleFunc("POST /api/recipes", auth(recipeHandler.Create))
 	mux.HandleFunc("PUT /api/recipes/{id}", auth(recipeHandler.Update))
 	mux.HandleFunc("DELETE /api/recipes/{id}", auth(recipeHandler.Delete))
-	mux.HandleFunc("GET /api/recipes/{id}/note", auth(noteHandler.Get))
-	mux.HandleFunc("PUT /api/recipes/{id}/note", auth(noteHandler.Put))
+	mux.HandleFunc("GET /api/recipes/{id}/logs", auth(logHandler.List))
+	mux.HandleFunc("POST /api/recipes/{id}/logs", auth(logHandler.Create))
+	mux.HandleFunc("DELETE /api/recipes/{id}/logs/{logId}", auth(logHandler.Delete))
 	mux.HandleFunc("POST /api/youtube/extract", auth(youtubeHandler.Extract))
 	mux.HandleFunc("POST /api/recipes/extract-image", auth(ocrHandler.ExtractImage))
 

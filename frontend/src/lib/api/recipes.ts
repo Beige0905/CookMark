@@ -86,27 +86,6 @@ export async function extractFromYouTube(url: string): Promise<YouTubeExtractRes
 	return res.json();
 }
 
-export type RecipeNote = {
-	recipe_id: number;
-	memo: string;
-	adjustments: Record<string, number>;
-	updated_at: string;
-};
-
-export async function getRecipeNote(recipeID: number): Promise<RecipeNote> {
-	const res = await fetch(`${BASE}/recipes/${recipeID}/note`);
-	if (!res.ok) throw new Error('메모 조회 실패');
-	return res.json();
-}
-
-export async function upsertRecipeNote(recipeID: number, note: Pick<RecipeNote, 'memo' | 'adjustments'>): Promise<void> {
-	const res = await fetch(`${BASE}/recipes/${recipeID}/note`, {
-		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(note)
-	});
-	if (!res.ok) throw new Error('메모 저장 실패');
-}
 
 export async function extractFromImage(file: File): Promise<ImageExtractResult> {
 	const formData = new FormData();
