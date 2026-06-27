@@ -23,6 +23,10 @@ func (s *RecipeService) GetByID(ctx context.Context, id int) (*model.Recipe, err
 	return s.repo.FindByID(ctx, id)
 }
 
+func (s *RecipeService) FindByOriginURL(ctx context.Context, url string) (*model.Recipe, error) {
+	return s.repo.FindByOriginURL(ctx, url)
+}
+
 func (s *RecipeService) Create(ctx context.Context, r *model.Recipe) error {
 	return s.repo.Create(ctx, r)
 }
