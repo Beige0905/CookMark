@@ -21,9 +21,9 @@ type CookingLogRepository interface {
 }
 
 type PantryRepository interface {
-	FindAll(ctx context.Context) ([]model.PantryItem, error)
+	FindAll(ctx context.Context, userID string) ([]model.PantryItem, error)
 	Create(ctx context.Context, item *model.PantryItem) error
-	Delete(ctx context.Context, id int) error
+	Delete(ctx context.Context, id int, userID string) error
 }
 
 type NoteRepository interface {

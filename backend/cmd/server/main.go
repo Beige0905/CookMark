@@ -25,15 +25,18 @@ func main() {
 	recipeRepo := repository.NewPgRecipeRepository(pool)
 	noteRepo := repository.NewPgNoteRepository(pool)
 	userRepo := repository.NewPgUserRepository(pool)
+	pantryRepo := repository.NewPgPantryRepository(pool)
 
 	aiService := service.NewAIService()
 	authService := service.NewAuthService(userRepo)
 	recipeService := service.NewRecipeService(recipeRepo)
 	noteService := service.NewNoteService(noteRepo)
+	pantryService := service.NewPantryService(pantryRepo, recipeRepo)
 
 	recipeHandler := handler.NewRecipeHandler(recipeService)
 	noteHandler := handler.NewNoteHandler(noteService)
 	authHandler := handler.NewAuthHandler(authService)
+	pantryHandler := handler.NewPantryHandler(pantryService)
 	youtubeHandler := handler.NewYouTubeHandler(
 		service.NewYouTubeService(aiService),
 		recipeService,
@@ -61,6 +64,11 @@ func main() {
 	mux.HandleFunc("PUT /api/recipes/{id}/note", auth(noteHandler.Put))
 	mux.HandleFunc("POST /api/youtube/extract", auth(youtubeHandler.Extract))
 	mux.HandleFunc("POST /api/recipes/extract-image", auth(ocrHandler.ExtractImage))
+
+	mux.HandleFunc("GET /api/pantry", auth(pantryHandler.List))
+	mux.HandleFunc("POST /api/pantry", auth(pantryHandler.Create))
+	mux.HandleFunc("DELETE /api/pantry/{id}", auth(pantryHandler.Delete))
+	mux.HandleFunc("GET /api/pantry/recommend", auth(pantryHandler.Recommend))
 
 	port := os.Getenv("PORT")
 	if port == "" {

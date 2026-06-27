@@ -26,8 +26,8 @@ type CookingLog struct {
 
 type PantryItem struct {
 	ID        int       `json:"id"`
+	UserID    string    `json:"-"`
 	Name      string    `json:"name"`
-	Category  *string   `json:"category,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
