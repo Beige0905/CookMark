@@ -22,15 +22,18 @@ func main() {
 	}
 	defer pool.Close()
 
-	// repository 구현체 주입
 	recipeRepo := repository.NewPgRecipeRepository(pool)
 	noteRepo := repository.NewPgNoteRepository(pool)
+	userRepo := repository.NewPgUserRepository(pool)
+
 	aiService := service.NewAIService()
+	authService := service.NewAuthService(userRepo)
 	recipeService := service.NewRecipeService(recipeRepo)
 	noteService := service.NewNoteService(noteRepo)
 
 	recipeHandler := handler.NewRecipeHandler(recipeService)
 	noteHandler := handler.NewNoteHandler(noteService)
+	authHandler := handler.NewAuthHandler(authService)
 	youtubeHandler := handler.NewYouTubeHandler(
 		service.NewYouTubeService(aiService),
 		recipeService,
@@ -39,14 +42,23 @@ func main() {
 		service.NewOCRService(aiService),
 	)
 
+	auth := middleware.Auth(authService)
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/recipes", recipeHandler.List)
-	mux.HandleFunc("GET /api/recipes/{id}", recipeHandler.Get)
-	mux.HandleFunc("POST /api/recipes", recipeHandler.Create)
-	mux.HandleFunc("GET /api/recipes/{id}/note", noteHandler.Get)
-	mux.HandleFunc("PUT /api/recipes/{id}/note", noteHandler.Put)
-	mux.HandleFunc("POST /api/youtube/extract", youtubeHandler.Extract)
-	mux.HandleFunc("POST /api/recipes/extract-image", ocrHandler.ExtractImage)
+
+	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
+	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+	mux.HandleFunc("POST /api/auth/logout", authHandler.Logout)
+	mux.HandleFunc("POST /api/auth/refresh", authHandler.Refresh)
+	mux.HandleFunc("GET /api/auth/me", authHandler.Me)
+
+	mux.HandleFunc("GET /api/recipes", auth(recipeHandler.List))
+	mux.HandleFunc("GET /api/recipes/{id}", auth(recipeHandler.Get))
+	mux.HandleFunc("POST /api/recipes", auth(recipeHandler.Create))
+	mux.HandleFunc("GET /api/recipes/{id}/note", auth(noteHandler.Get))
+	mux.HandleFunc("PUT /api/recipes/{id}/note", auth(noteHandler.Put))
+	mux.HandleFunc("POST /api/youtube/extract", auth(youtubeHandler.Extract))
+	mux.HandleFunc("POST /api/recipes/extract-image", auth(ocrHandler.ExtractImage))
 
 	port := os.Getenv("PORT")
 	if port == "" {

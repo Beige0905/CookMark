@@ -7,6 +7,7 @@ import (
 
 	"github.com/Beige0905/recipe-backend/internal/model"
 	"github.com/Beige0905/recipe-backend/internal/service"
+	authpkg "github.com/Beige0905/recipe-backend/pkg/auth"
 )
 
 type NoteHandler struct {
@@ -18,12 +19,17 @@ func NewNoteHandler(svc *service.NoteService) *NoteHandler {
 }
 
 func (h *NoteHandler) Get(w http.ResponseWriter, r *http.Request) {
+	userID, ok := authpkg.UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, "인증이 필요합니다", http.StatusUnauthorized)
+		return
+	}
 	recipeID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, "잘못된 ID", http.StatusBadRequest)
 		return
 	}
-	note, err := h.svc.GetByRecipeID(r.Context(), recipeID)
+	note, err := h.svc.GetByRecipeID(r.Context(), recipeID, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -32,6 +38,11 @@ func (h *NoteHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *NoteHandler) Put(w http.ResponseWriter, r *http.Request) {
+	userID, ok := authpkg.UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, "인증이 필요합니다", http.StatusUnauthorized)
+		return
+	}
 	recipeID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, "잘못된 ID", http.StatusBadRequest)
@@ -43,6 +54,7 @@ func (h *NoteHandler) Put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	note.RecipeID = recipeID
+	note.UserID = userID
 	if err := h.svc.Upsert(r.Context(), &note); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

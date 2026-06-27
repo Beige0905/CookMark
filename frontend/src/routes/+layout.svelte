@@ -1,25 +1,41 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 	import Home from 'lucide-svelte/icons/house';
 	import BookOpen from 'lucide-svelte/icons/book-open';
 	import Refrigerator from 'lucide-svelte/icons/refrigerator';
 	import Settings from 'lucide-svelte/icons/settings';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
+	import { auth } from '$lib/stores/auth.svelte';
 
-	// Helper to check active route
 	const isActive = (path: string) => {
 		if (path === '/') return $page.url.pathname === '/';
 		return $page.url.pathname.startsWith(path);
 	};
+
+	const isAuthPage = $derived(
+		$page.url.pathname.startsWith('/login') || $page.url.pathname.startsWith('/register')
+	);
+
+	onMount(() => {
+		if (!isAuthPage) {
+			auth.fetchMe();
+		}
+	});
+
+	const userInitial = $derived(auth.user?.display_name?.[0]?.toUpperCase() ?? '?');
 </script>
 
+{#if isAuthPage}
+	<slot />
+{:else}
 <!-- Outer: warm ivory bg, creates depth on desktop -->
 <div class="min-h-screen bg-[#EDE9E2]">
 	<!-- Centered app container: Mobile-first, becomes wider on desktop -->
 	<div class="mx-auto min-h-screen max-w-xl bg-white shadow-[0_0_60px_rgba(0,0,0,0.08)] lg:max-w-5xl">
 		<div class="flex flex-col lg:flex-row">
-			
+
 			<!-- Left Sidebar: Hidden on mobile, sticky on desktop -->
 			<aside class="hidden w-80 shrink-0 border-r border-stone-100 p-8 lg:sticky lg:top-0 lg:block lg:h-screen">
 				<div class="flex flex-col h-full">
@@ -61,7 +77,6 @@
 						</a>
 					</nav>
 
-
 					<!-- Stats in Sidebar for Desktop -->
 					<div class="mt-auto space-y-4">
 						<div class="rounded-2xl bg-[#F5F2EC] p-5">
@@ -84,7 +99,7 @@
 						<span class="text-lg font-bold tracking-tight text-stone-900">Cookmark</span>
 						<span class="text-[11px] font-medium text-stone-400">나의 레시피 보관함</span>
 					</a>
-					<div class="flex h-8 w-8 items-center justify-center rounded-full bg-[#EBF0EB] text-xs font-bold text-[#6A8C6C]">나</div>
+					<div class="flex h-8 w-8 items-center justify-center rounded-full bg-[#EBF0EB] text-xs font-bold text-[#6A8C6C]">{userInitial}</div>
 				</div>
 
 				<slot />
@@ -114,5 +129,6 @@
 		</a>
 	</div>
 </nav>
+{/if}
 
 <ToastContainer />

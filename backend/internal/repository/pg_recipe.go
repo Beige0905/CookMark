@@ -16,8 +16,12 @@ func NewPgRecipeRepository(pool *pgxpool.Pool) *PgRecipeRepository {
 	return &PgRecipeRepository{pool: pool}
 }
 
-func (r *PgRecipeRepository) FindAll(ctx context.Context) ([]model.Recipe, error) {
-	rows, err := r.pool.Query(ctx, "SELECT id, title, origin_url, image_url, base_servings, ingredients, instructions, created_at FROM recipes WHERE deleted_at IS NULL ORDER BY created_at DESC")
+func (r *PgRecipeRepository) FindAll(ctx context.Context, userID string) ([]model.Recipe, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT id, title, origin_url, image_url, base_servings, ingredients, instructions, created_at
+		 FROM recipes WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC`,
+		userID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -35,27 +39,27 @@ func (r *PgRecipeRepository) FindAll(ctx context.Context) ([]model.Recipe, error
 	return recipes, nil
 }
 
-func (r *PgRecipeRepository) FindByID(ctx context.Context, id int) (*model.Recipe, error) {
+func (r *PgRecipeRepository) FindByID(ctx context.Context, id int, userID string) (*model.Recipe, error) {
 	var recipe model.Recipe
-	err := r.pool.QueryRow(ctx, "SELECT id, title, origin_url, image_url, base_servings, ingredients, instructions, created_at FROM recipes WHERE id = $1 AND deleted_at IS NULL", id).
-		Scan(&recipe.ID, &recipe.Title, &recipe.OriginURL, &recipe.ImageURL, &recipe.BaseServings, &recipe.Ingredients, &recipe.Instructions, &recipe.CreatedAt)
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, title, origin_url, image_url, base_servings, ingredients, instructions, created_at
+		 FROM recipes WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+		id, userID,
+	).Scan(&recipe.ID, &recipe.Title, &recipe.OriginURL, &recipe.ImageURL, &recipe.BaseServings, &recipe.Ingredients, &recipe.Instructions, &recipe.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
 	return &recipe, nil
 }
 
-func (r *PgRecipeRepository) FindByOriginURL(ctx context.Context, url string) (*model.Recipe, error) {
+func (r *PgRecipeRepository) FindByOriginURL(ctx context.Context, url string, userID string) (*model.Recipe, error) {
 	var recipe model.Recipe
-	query := `
-		SELECT id, title, origin_url, image_url, base_servings, ingredients, instructions, created_at
-		FROM recipes
-		WHERE origin_url = $1 AND deleted_at IS NULL
-		ORDER BY created_at DESC
-		LIMIT 1
-	`
-	err := r.pool.QueryRow(ctx, query, url).
-		Scan(&recipe.ID, &recipe.Title, &recipe.OriginURL, &recipe.ImageURL, &recipe.BaseServings, &recipe.Ingredients, &recipe.Instructions, &recipe.CreatedAt)
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, title, origin_url, image_url, base_servings, ingredients, instructions, created_at
+		 FROM recipes WHERE origin_url = $1 AND user_id = $2 AND deleted_at IS NULL
+		 ORDER BY created_at DESC LIMIT 1`,
+		url, userID,
+	).Scan(&recipe.ID, &recipe.Title, &recipe.OriginURL, &recipe.ImageURL, &recipe.BaseServings, &recipe.Ingredients, &recipe.Instructions, &recipe.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -63,13 +67,12 @@ func (r *PgRecipeRepository) FindByOriginURL(ctx context.Context, url string) (*
 }
 
 func (r *PgRecipeRepository) Create(ctx context.Context, recipe *model.Recipe) error {
-	query := `
-		INSERT INTO recipes (title, origin_url, image_url, base_servings, ingredients, instructions)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, created_at
-	`
-	err := r.pool.QueryRow(ctx, query, recipe.Title, recipe.OriginURL, recipe.ImageURL, recipe.BaseServings, recipe.Ingredients, recipe.Instructions).
-		Scan(&recipe.ID, &recipe.CreatedAt)
+	err := r.pool.QueryRow(ctx,
+		`INSERT INTO recipes (title, origin_url, image_url, base_servings, ingredients, instructions, user_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		 RETURNING id, created_at`,
+		recipe.Title, recipe.OriginURL, recipe.ImageURL, recipe.BaseServings, recipe.Ingredients, recipe.Instructions, recipe.UserID,
+	).Scan(&recipe.ID, &recipe.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("레시피 생성 실패: %w", err)
 	}
