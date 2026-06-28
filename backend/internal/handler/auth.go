@@ -128,7 +128,7 @@ func setTokenCookies(w http.ResponseWriter, accessToken, refreshToken string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		Path:     "/api/auth",
+		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
@@ -147,7 +147,7 @@ func clearTokenCookies(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",
-		Path:     "/api/auth",
+		Path:     "/",
 		HttpOnly: true,
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,

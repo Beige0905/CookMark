@@ -20,6 +20,17 @@
 	);
 
 	onMount(() => {
+		const _fetch = window.fetch.bind(window);
+		window.fetch = async (input, init) => {
+			const res = await _fetch(input, init);
+			if (res.status !== 401) return res;
+			const url = input instanceof Request ? input.url : String(input);
+			if (url.includes('/api/auth/')) return res;
+			const refreshRes = await _fetch('/api/auth/refresh', { method: 'POST' });
+			if (!refreshRes.ok) { window.location.href = '/login'; return res; }
+			return _fetch(input, init);
+		};
+
 		theme.init();
 		if (!isAuthPage) {
 			auth.fetchMe();
