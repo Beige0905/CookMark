@@ -10,6 +10,8 @@
 	import { auth } from '$lib/stores/auth.svelte';
 	import { theme } from '$lib/stores/theme.svelte';
 
+	let recipeCount = $state(0);
+
 	const isActive = (path: string) => {
 		if (path === '/') return $page.url.pathname === '/';
 		return $page.url.pathname.startsWith(path);
@@ -34,6 +36,10 @@
 		theme.init();
 		if (!isAuthPage) {
 			auth.fetchMe();
+			fetch('/api/recipes')
+				.then((r) => r.json())
+				.then((r: { id: number }[]) => { recipeCount = r.length; })
+				.catch(() => {});
 		}
 	});
 
@@ -91,14 +97,10 @@
 					</nav>
 
 					<!-- Stats in Sidebar for Desktop -->
-					<div class="mt-auto space-y-4">
+					<div class="mt-auto">
 						<div class="rounded-2xl bg-[#F5F2EC] dark:bg-stone-800 p-5">
 							<p class="mb-1 text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">총 레시피</p>
-							<p class="text-4xl font-bold text-stone-800 dark:text-stone-100">12</p>
-						</div>
-						<div class="rounded-2xl bg-[#EEF3EE] dark:bg-stone-800 p-5">
-							<p class="mb-1 text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">이번 달 요리</p>
-							<p class="text-4xl font-bold text-stone-800 dark:text-stone-100">5<span class="ml-1 text-sm font-normal text-stone-400">회</span></p>
+							<p class="text-4xl font-bold text-stone-800 dark:text-stone-100">{recipeCount}</p>
 						</div>
 					</div>
 				</div>
