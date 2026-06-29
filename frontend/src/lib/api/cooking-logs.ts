@@ -13,7 +13,7 @@ export async function getCookingLogs(recipeID: number): Promise<CookingLog[]> {
 	return res.json();
 }
 
-export async function addCookingLog(recipeID: number, data: { comment?: string; cooked_at?: string }): Promise<CookingLog> {
+export async function addCookingLog(recipeID: number, data: { comment?: string; cooked_at?: string; delete_pantry_ids?: number[] }): Promise<CookingLog> {
 	const res = await fetch(`${BASE}/recipes/${recipeID}/logs`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },

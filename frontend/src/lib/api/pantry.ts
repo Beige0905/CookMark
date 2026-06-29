@@ -39,6 +39,12 @@ export async function deletePantryItem(id: number): Promise<void> {
 	if (!res.ok) throw new Error('재료 삭제 실패');
 }
 
+export async function getPantryMatchesForRecipe(recipeID: number): Promise<PantryItem[]> {
+	const res = await fetch(`${BASE}/recipes/${recipeID}/pantry-matches`);
+	if (!res.ok) throw new Error('냉장고 매칭 조회 실패');
+	return res.json();
+}
+
 export async function getRecommendations(): Promise<RecommendResult[]> {
 	const res = await fetch(`${BASE}/pantry/recommend`);
 	if (!res.ok) throw new Error('추천 조회 실패');

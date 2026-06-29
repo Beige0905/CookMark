@@ -37,6 +37,38 @@ type RecommendResult struct {
 	TotalCount   int          `json:"total_count"`
 }
 
+func (s *PantryService) MatchForRecipe(ctx context.Context, recipeID int, userID string) ([]model.PantryItem, error) {
+	recipe, err := s.recipeRepo.FindByID(ctx, recipeID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var ingredients []struct {
+		Name string `json:"name"`
+	}
+	if err := json.Unmarshal(recipe.Ingredients, &ingredients); err != nil {
+		return nil, err
+	}
+
+	pantryItems, err := s.pantryRepo.FindAll(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var matched []model.PantryItem
+	for _, item := range pantryItems {
+		itemName := strings.ToLower(item.Name)
+		for _, ing := range ingredients {
+			ingName := strings.ToLower(ing.Name)
+			if strings.Contains(ingName, itemName) || strings.Contains(itemName, ingName) {
+				matched = append(matched, item)
+				break
+			}
+		}
+	}
+	return matched, nil
+}
+
 func (s *PantryService) Recommend(ctx context.Context, userID string) ([]RecommendResult, error) {
 	items, err := s.pantryRepo.FindAll(ctx, userID)
 	if err != nil {

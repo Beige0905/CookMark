@@ -4,8 +4,33 @@ import type { Cookies, Handle } from '@sveltejs/kit';
 
 const PUBLIC_PATHS = ['/login', '/register'];
 const BACKEND_URL = env.API_URL ?? 'http://localhost:8080';
+const SECURE = env.APP_ENV === 'production';
 
 export const handle: Handle = async ({ event, resolve }) => {
+	if (event.url.pathname === '/health') {
+		return new Response('ok', { status: 200 });
+	}
+
+	// Proxy /api/* requests to backend
+	if (event.url.pathname.startsWith('/api')) {
+		const url = `${BACKEND_URL}${event.url.pathname}${event.url.search}`;
+		const headers = new Headers(event.request.headers);
+
+		const isBodyless = ['GET', 'HEAD'].includes(event.request.method);
+		const response = await fetch(url, {
+			method: event.request.method,
+			headers,
+			body: isBodyless ? null : event.request.body,
+			// @ts-ignore
+			duplex: 'half'
+		});
+
+		return new Response(response.body, {
+			status: response.status,
+			headers: response.headers
+		});
+	}
+
 	const accessToken = event.cookies.get('access_token');
 	const isPublic = PUBLIC_PATHS.some((p) => event.url.pathname.startsWith(p));
 
@@ -47,6 +72,7 @@ async function tryRefresh(cookies: Cookies, refreshToken: string): Promise<boole
 		cookies.set('access_token', match[1], {
 			path: '/',
 			httpOnly: true,
+			secure: SECURE,
 			sameSite: 'lax',
 			maxAge: 15 * 60
 		});

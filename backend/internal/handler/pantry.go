@@ -72,6 +72,28 @@ func (h *PantryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *PantryHandler) MatchForRecipe(w http.ResponseWriter, r *http.Request) {
+	userID, ok := authpkg.UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, "인증이 필요합니다", http.StatusUnauthorized)
+		return
+	}
+	recipeID, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "잘못된 ID", http.StatusBadRequest)
+		return
+	}
+	items, err := h.svc.MatchForRecipe(r.Context(), recipeID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if items == nil {
+		items = []model.PantryItem{}
+	}
+	writeJSON(w, items)
+}
+
 func (h *PantryHandler) Recommend(w http.ResponseWriter, r *http.Request) {
 	userID, ok := authpkg.UserIDFromContext(r.Context())
 	if !ok {

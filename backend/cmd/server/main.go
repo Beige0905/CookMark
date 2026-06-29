@@ -49,6 +49,10 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	mux.HandleFunc("POST /api/auth/logout", authHandler.Logout)
@@ -63,6 +67,7 @@ func main() {
 	mux.HandleFunc("GET /api/recipes/{id}/logs", auth(logHandler.List))
 	mux.HandleFunc("POST /api/recipes/{id}/logs", auth(logHandler.Create))
 	mux.HandleFunc("DELETE /api/recipes/{id}/logs/{logId}", auth(logHandler.Delete))
+	mux.HandleFunc("GET /api/recipes/{id}/pantry-matches", auth(pantryHandler.MatchForRecipe))
 	mux.HandleFunc("POST /api/youtube/extract", auth(youtubeHandler.Extract))
 	mux.HandleFunc("POST /api/recipes/extract-image", auth(ocrHandler.ExtractImage))
 

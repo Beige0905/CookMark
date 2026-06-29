@@ -50,8 +50,9 @@ func (h *CookingLogHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		Comment  *string `json:"comment"`
-		CookedAt *string `json:"cooked_at"`
+		Comment         *string `json:"comment"`
+		CookedAt        *string `json:"cooked_at"`
+		DeletePantryIDs []int   `json:"delete_pantry_ids"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "잘못된 요청 본문", http.StatusBadRequest)
@@ -69,7 +70,7 @@ func (h *CookingLogHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Comment:  body.Comment,
 		CookedAt: cookedAt,
 	}
-	if err := h.svc.Create(r.Context(), l); err != nil {
+	if err := h.svc.Create(r.Context(), l, body.DeletePantryIDs); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

@@ -19,7 +19,10 @@ func (s *CookingLogService) GetByRecipeID(ctx context.Context, recipeID int, use
 	return s.repo.FindByRecipeID(ctx, recipeID, userID)
 }
 
-func (s *CookingLogService) Create(ctx context.Context, l *model.CookingLog) error {
+func (s *CookingLogService) Create(ctx context.Context, l *model.CookingLog, pantryIDs []int) error {
+	if len(pantryIDs) > 0 {
+		return s.repo.CreateAndDeletePantry(ctx, l, pantryIDs, l.UserID)
+	}
 	return s.repo.Create(ctx, l)
 }
 

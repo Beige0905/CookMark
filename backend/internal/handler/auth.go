@@ -3,10 +3,15 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Beige0905/recipe-backend/internal/service"
 )
+
+func isSecure() bool {
+	return os.Getenv("APP_ENV") == "production"
+}
 
 type AuthHandler struct {
 	svc *service.AuthService
@@ -91,6 +96,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		Value:    accessToken,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   isSecure(),
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(15 * time.Minute),
 	})
@@ -117,11 +123,13 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 }
 
 func setTokenCookies(w http.ResponseWriter, accessToken, refreshToken string) {
+	secure := isSecure()
 	http.SetCookie(w, &http.Cookie{
 		Name:     "access_token",
 		Value:    accessToken,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(15 * time.Minute),
 	})
@@ -130,6 +138,7 @@ func setTokenCookies(w http.ResponseWriter, accessToken, refreshToken string) {
 		Value:    refreshToken,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
