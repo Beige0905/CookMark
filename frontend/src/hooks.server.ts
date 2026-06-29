@@ -25,9 +25,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 			duplex: 'half'
 		});
 
+		const headers = new Headers(response.headers);
+		headers.delete('content-encoding');
+		headers.delete('content-length');
+
 		return new Response(response.body, {
 			status: response.status,
-			headers: response.headers
+			headers
 		});
 	}
 
