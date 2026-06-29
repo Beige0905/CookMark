@@ -50,9 +50,10 @@ health:
 # 배포 완료 대기 (Railway 빌드 후 헬스체크 폴링)
 wait-deploy:
     @echo "Railway 빌드 대기 중... (약 2-3분 소요)"
-    @for i in $(seq 1 24); do \
+    @i=0; while [ $$i -lt 24 ]; do \
         sleep 10; \
-        printf "[$$(expr $i \* 10)s] "; \
+        i=$$((i+1)); \
+        printf "[$$((i*10))s] "; \
         if curl -sf https://cookmark-production.up.railway.app/health > /dev/null 2>&1; then \
             echo "✓ 배포 완료"; \
             exit 0; \

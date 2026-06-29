@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -63,7 +64,7 @@ func (s *OCRService) ExtractFromImage(ctx context.Context, fileBytes []byte, con
 	}
 
 	if result.Error != "" {
-		return nil, fmt.Errorf(result.Error)
+		return nil, errors.New(result.Error)
 	}
 
 	return &result.ImageExtractResult, nil

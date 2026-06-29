@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -163,7 +164,7 @@ func (s *YouTubeService) extractIngredients(ctx context.Context, title, descript
 	}
 
 	if result.Error != "" {
-		return nil, 0, fmt.Errorf(result.Error)
+		return nil, 0, errors.New(result.Error)
 	}
 
 	return result.Ingredients, result.BaseServings, nil
