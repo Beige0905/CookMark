@@ -14,12 +14,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Proxy /api/* requests to backend
 	if (event.url.pathname.startsWith('/api')) {
 		const url = `${BACKEND_URL}${event.url.pathname}${event.url.search}`;
-		const headers = new Headers(event.request.headers);
+		const requestHeaders = new Headers(event.request.headers);
 
 		const isBodyless = ['GET', 'HEAD'].includes(event.request.method);
 		const response = await fetch(url, {
 			method: event.request.method,
-			headers,
+			headers: requestHeaders,
 			body: isBodyless ? null : event.request.body,
 			// @ts-ignore
 			duplex: 'half'
