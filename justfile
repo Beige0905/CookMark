@@ -33,3 +33,36 @@ db-migrate file:
 # Go 백엔드 테스트 실행
 test:
     cd backend && go test ./...
+
+# 프론트엔드 타입체크
+typecheck:
+    cd frontend && npm run check
+
+# 배포 전 로컬 검증 (테스트 + 타입체크)
+check: test typecheck
+
+# Railway 헬스체크
+health:
+    @curl -sf https://cookmark-production.up.railway.app/health \
+        && echo "✓ healthy" \
+        || echo "✗ unhealthy"
+
+# 배포 완료 대기 (Railway 빌드 후 헬스체크 폴링)
+wait-deploy:
+    @echo "Railway 빌드 대기 중... (약 2-3분 소요)"
+    @for i in $(seq 1 24); do \
+        sleep 10; \
+        printf "[$$(expr $i \* 10)s] "; \
+        if curl -sf https://cookmark-production.up.railway.app/health > /dev/null 2>&1; then \
+            echo "✓ 배포 완료"; \
+            exit 0; \
+        fi; \
+        echo "대기 중..."; \
+    done; \
+    echo "⚠ 4분 초과 - Railway 대시보드 확인"
+
+# 배포 파이프라인 (체크 → 푸시 → 완료 대기)
+deploy: check
+    git push origin main
+    @echo "✓ 푸시 완료 - Railway 자동 배포 시작"
+    just wait-deploy
